@@ -1,0 +1,25 @@
+place files in qpid-proton/examples/python
+
+you may need to setup the python environment by running "source config.sh" from the qpid-proton/build directory
+
+openshift origin should be running with enmasse and the oc command should be in the path
+
+to start a receiver:
+    oc_freceive [address]
+
+to start a sender:
+    oc_rsend [address]
+
+if you don't pass an address, "anycast" will be used
+
+random_send.py is a hack of simple_send.py that sends a random number of messages to an address and then waits a random number of seconds.
+
+oc_rsend will call random_send.py with the host/address for the messaging service
+
+forever_recv.py is a hack of simple_recv that will stay connected and listening well, forever
+
+oc_freceive will call forever_recv.py with the host/address for the messaging service
+
+
+
+
