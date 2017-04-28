@@ -55,7 +55,7 @@ class Send(MessagingHandler):
             self.sent += 1
             if self.messages == 0:
                 self.total = self.sent + 1
-            print (".", end="")
+            # print (".", end="")
             sys.stdout.flush()
         self.container.schedule(self.period, self)
 
