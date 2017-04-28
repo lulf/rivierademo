@@ -35,19 +35,7 @@ class Recv(MessagingHandler):
         event.container.create_receiver(self.url)
 
     def on_message(self, event):
-        if event.message.id and event.message.id < self.received:
-            # ignore duplicate message
-            return
-        if self.count == 0:
-            self.expected = self.received + 1
-        if self.expected == 0 or self.received < self.expected:
-            print(event.message.body)
-            self.received += 1
-            if self.count == 0:
-                self.expected = self.received + 1
-            if self.received == self.expected:
-                event.receiver.close()
-                event.connection.close()
+        self.received += 1
 
 parser = optparse.OptionParser(usage="usage: %prog [options]")
 parser.add_option("-a", "--address", default="localhost:5672/examples",

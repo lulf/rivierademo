@@ -30,43 +30,37 @@ from proton.reactor import Container
 from datetime import datetime, timedelta
 
 class Send(MessagingHandler):
-    def __init__(self, url, messages):
+    def __init__(self, url, messages, period):
         super(Send, self).__init__()
         self.url = url
         self.sent = 0
         self.confirmed = 0
         self.total = messages
         self.messages = messages
-        self.sendUntil = datetime.now() + timedelta(seconds=5)
+        self.period = period
+        self.sender = None
+        self.container = None
+
+    def set_container(self, container):
+        self.container = container
 
     def on_start(self, event):
-        event.container.create_sender(self.url)
+        self.sender = event.container.create_sender(self.url)
+        self.container.schedule(self.period, self)
 
-    def on_sendable(self, event):
-        if self.messages == 0:
-            self.total = self.sent + 1
-        while event.sender.credit and self.sent < self.total:
+    def on_timer_task(self, event):
+        if self.sender and self.sender.credit:
             msg = Message(id=(self.sent+1), body={'sequence':(self.sent+1)})
-            event.sender.send(msg)
+            self.sender.send(msg)
             self.sent += 1
             if self.messages == 0:
                 self.total = self.sent + 1
             print (".", end="")
             sys.stdout.flush()
-            if datetime.now() > self.sendUntil:
-                waitUntil = datetime.now() + timedelta(seconds=5)
-                while datetime.now() < waitUntil:
-                    1
-                    # print ("z", end="")
-                r = random.randint(1, 10)
-                self.sendUntil = datetime.now() + timedelta(seconds=r)
-            #sleep(0.2)
+        self.container.schedule(self.period, self)
 
     def on_accepted(self, event):
         self.confirmed += 1
-        if self.confirmed == self.total:
-            print("all messages confirmed")
-            event.connection.close()
 
     def on_disconnected(self, event):
         self.sent = self.confirmed
@@ -80,5 +74,8 @@ parser.add_option("-m", "--messages", type="int", default=100,
 opts, args = parser.parse_args()
 
 try:
-    Container(Send(opts.address, opts.messages)).run()
+    sender = Send(opts.address, opts.messages, random.uniform(0.03, 0.1))
+    c = Container(sender)
+    sender.set_container(c)
+    c.run()
 except KeyboardInterrupt: pass

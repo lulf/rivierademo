@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testclients
+spec:
+  containers:
+    - name: clients
+      image: lulf/rivierademo:latest
