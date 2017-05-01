@@ -32,7 +32,7 @@ class Recv(MessagingHandler):
         self.count = count
 
     def on_start(self, event):
-        conn = event.container.connect(self.url, allowed_mechs="PLAIN", user='demo', password='demo')
+        conn = event.container.connect(self.url, allowed_mechs="PLAIN", user='demo@enmasse', password='demo')
         event.container.create_receiver(conn, self.url)
 
     def on_message(self, event):
