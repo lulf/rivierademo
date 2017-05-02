@@ -7,5 +7,5 @@ if [ -z "$1" ]
     ADDRESS="anycast"
 fi
 
-./forever_recv.py -a "amqps://messaging-enmasse.amq.io:443/$ADDRESS" -m 0
+./forever_recv.py -a "amqps://messaging-enmasse.amq.io:443/$ADDRESS"
 

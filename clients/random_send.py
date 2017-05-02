@@ -24,28 +24,26 @@ import random
 import sys
 
 from proton import Message
+from proton import Url
 from proton.handlers import MessagingHandler
 from time import sleep
 from proton.reactor import Container
 from datetime import datetime, timedelta
 
 class Send(MessagingHandler):
-    def __init__(self, url, messages, period):
+    def __init__(self, url, period):
         super(Send, self).__init__()
-        self.url = url
+        self.url = Url(url)
         self.sent = 0
         self.confirmed = 0
-        self.total = messages
-        self.messages = messages
         self.period = period
         self.sender = None
         self.container = None
 
-    def set_container(self, container):
-        self.container = container
-
     def on_start(self, event):
-        self.sender = event.container.create_sender(self.url)
+        self.container = event.container
+        conn = event.container.connect(self.url, allowed_mechs=str("PLAIN"), user='demo@enmasse', password='demo')
+        self.sender = event.container.create_sender(conn, self.url.path)
         self.container.schedule(self.period, self)
 
     def on_timer_task(self, event):
@@ -53,10 +51,6 @@ class Send(MessagingHandler):
             msg = Message(id=(self.sent+1), body={'sequence':(self.sent+1)})
             self.sender.send(msg)
             self.sent += 1
-            if self.messages == 0:
-                self.total = self.sent + 1
-            # print (".", end="")
-            sys.stdout.flush()
         self.container.schedule(self.period, self)
 
     def on_accepted(self, event):
@@ -69,13 +63,8 @@ parser = optparse.OptionParser(usage="usage: %prog [options]",
                                description="Send messages to the supplied address.")
 parser.add_option("-a", "--address", default="localhost:5672/examples",
                   help="address to which messages are sent (default %default)")
-parser.add_option("-m", "--messages", type="int", default=100,
-                  help="number of messages to send (default %default)")
 opts, args = parser.parse_args()
 
 try:
-    sender = Send(opts.address, opts.messages, random.uniform(0.03, 0.1))
-    c = Container(sender)
-    sender.set_container(c)
-    c.run()
+    Container(Send(opts.address, random.uniform(0.03, 0.1))).run()
 except KeyboardInterrupt: pass

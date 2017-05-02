@@ -22,18 +22,17 @@ from __future__ import print_function
 import optparse
 from proton.handlers import MessagingHandler
 from proton.reactor import Container
+from proton import Url
 
 class Recv(MessagingHandler):
-    def __init__(self, url, count):
+    def __init__(self, url):
         super(Recv, self).__init__()
-        self.url = url
-        self.expected = count
+        self.url = Url(url)
         self.received = 0
-        self.count = count
 
     def on_start(self, event):
-        conn = event.container.connect(self.url, allowed_mechs="PLAIN", user='demo@enmasse', password='demo')
-        event.container.create_receiver(conn, self.url)
+        conn = event.container.connect(self.url, allowed_mechs=str("PLAIN"), user='demo@enmasse', password='demo')
+        event.container.create_receiver(conn, self.url.path)
 
     def on_message(self, event):
         self.received += 1
@@ -41,12 +40,10 @@ class Recv(MessagingHandler):
 parser = optparse.OptionParser(usage="usage: %prog [options]")
 parser.add_option("-a", "--address", default="localhost:5672/examples",
                   help="address from which messages are received (default %default)")
-parser.add_option("-m", "--messages", type="int", default=100,
-                  help="number of messages to receive; 0 receives indefinitely (default %default)")
 opts, args = parser.parse_args()
 
 try:
-    Container(Recv(opts.address, opts.messages)).run()
+    Container(Recv(opts.address)).run()
 except KeyboardInterrupt: pass
 
 
